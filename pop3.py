@@ -29,7 +29,7 @@ def parseEmail(msg,path):
             if not os.path.exists(path):
                 os.mkdir(path)
             if os.path.exists(fullpath):
-                print filename," existed"
+                #print filename," existed"
             else:
                 f = open(fullpath,'wb')
                 print filename," creat"

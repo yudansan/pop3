@@ -5,11 +5,14 @@ import sys,os
 import time
 import pop3
 import config
+import subprocess
 
 flag = 0
 Download_path = config.read('global','down')
 BT_path = os.path.join(Download_path,'BT')
 TXT_path = os.path.join(BT_path,'log.txt')
+li = []
+len_mx = 5
 
 #遍历
 def dir_fun(path,txt):
@@ -58,15 +61,35 @@ def _verifyContent(path,cont):
 def _download(cont):
     fileName, fileExtension = os.path.splitext(cont)
     if fileExtension == '.torrent':
-        os.system('lx download --bt '+os.path.join(BT_path,cont)+' --delete')
-    print 'start download'
+         p = subprocess.Popen('lx download --bt '+os.path.join(BT_path,cont)+' --output-dir='+\
+                              BT_path+' --delete'+' --continue', shell=True).pid
+         print 'start download'
+         li.append(p)
+         while len(li) >= len_mx:
+             _updateList(li)
+             time.sleep(5)
+
+def _updateList(li):
+
+    for x in li:
+
+        if x.returncode:
+
+            li.remove(x)
+
+            print 'remove'
+
 
 if __name__ == "__main__":
     fobj = open(TXT_path,'a')
     fobj.close()
-    os.system('lx login '+config.read('xunlei', 'name')+' '+config.read('xunlei', 'password'))
+    os.system('lx login '+config.read('xunlei', 'name')+' '+\
+              config.read('xunlei', 'password'))
     os.system('lx list')
     while True:
+        while len(li) >= len_mx:
+            _updateList(li)
+            time.sleep(5)
         print time.ctime()
         pop3.pop(BT_path)
         dir_fun(BT_path,TXT_path)
