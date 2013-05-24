@@ -1,13 +1,14 @@
+#!/usr/bin/python
 #-*- coding:utf-8 -*- 
 # down.py
 import sys,os
 import time
 import pop3
+import config
 
-num = 0
 flag = 0
-C_path = os.getcwd()
-BT_path = os.path.join(C_path,'BT')
+Download_path = config.read('global','down')
+BT_path = os.path.join(Download_path,'BT')
 TXT_path = os.path.join(BT_path,'log.txt')
 
 #遍历
@@ -31,15 +32,17 @@ def search(path=None,txt=None):
 
 #匹配
 def _verifyContent(path,cont):
-    global num
     global flag
     fobj = open(path,'r')
-    fobjContent = fobj.readlines()
+    lines = fobj.readlines()
     fobj.close()
-    for index,x in enumerate(fobjContent):
-        if cont in x:
+    for i in range(len(lines)):
+        lines[i] = lines[i].replace('\r','')
+        lines[i] = lines[i].replace('\n','')
+        if lines[i] == cont:
             flag = 1
             break
+        i=i+1
     if flag == 1:
         # existed
         flag = 0
@@ -48,19 +51,23 @@ def _verifyContent(path,cont):
         # download
         fobj=open(path,'a')
         fobj.write(cont+'\n')       
-        _download()
+        _download(cont)
         fobj.close()
         return
 
-def _download():
+def _download(cont):
+    fileName, fileExtension = os.path.splitext(cont)
+    if fileExtension == '.torrent':
+        os.system('lx download --bt '+os.path.join(BT_path,cont)+' --delete')
     print 'start download'
 
 if __name__ == "__main__":
-    fobj = open(TXT_path,'w')
+    fobj = open(TXT_path,'a')
     fobj.close()
+    os.system('lx login '+config.read('xunlei', 'name')+' '+config.read('xunlei', 'password'))
+    os.system('lx list')
     while True:
         print time.ctime()
         pop3.pop(BT_path)
-        time.sleep(5)
         dir_fun(BT_path,TXT_path)
         time.sleep(60*5)
